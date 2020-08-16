@@ -1,0 +1,9 @@
+{
+  "service": {
+    "name": "vaccinePropaganda",
+    "tags": [
+      "theTruth"
+    ],
+    "port": 666
+  }
+}

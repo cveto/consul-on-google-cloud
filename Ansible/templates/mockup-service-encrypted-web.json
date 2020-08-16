@@ -1,0 +1,9 @@
+{
+  "service": {
+    "name": "encryptedWeb",
+    "tags": [
+      "www"
+    ],
+    "port": 443
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "service": {
+    "name": "russianBackdoor",
+    "tags": [
+      "russia"
+    ],
+    "port": 1337
+  }
+}

@@ -1,0 +1,422 @@
+---
+  - name: System something_something playbook
+    hosts: consul_cluster
+    become: yes
+    vars:
+      # MODIFYABLE (to match gcloud user)
+      ansible_user: cvetozaver      
+      
+      # CONSUL CONFIGURATION
+      var_consul_user: consul
+      var_consul_datacenter: dc1
+      var_consul_config_dir: "/etc/consul.d"
+      var_consul_data_dir: "/var/lib/consul"
+      var_consul_log_dir: "/var/log/consul"
+      var_consul_home_dir: "/home/consul"
+      var_consul_secret: "+BBkVKsPndMntq5LWrRShLmQJIVV14m+c1iotmN/6GQ="                             # Run    $ consul keygen    to get a new one
+
+      # SERVERS
+      var_ip_node1: 10.172.0.21                                                                     # Can omit defining IPs in playlist as soon as ansible starts supporting multiple IPs per host OR we move system management off the public internet.
+      var_ip_node2: 10.172.0.22
+      var_ip_node3: 10.172.0.23
+      var_ip_node4: 10.172.0.24
+
+      # WHO IS TO BE THE COUNSUL SERVER?
+      var_ip_consul_server: "{{ var_ip_node1 }}"                                                    # !! Who is to be the Consul server is decided here !!  
+      var_am_i_server: "{{ 'yes' if var_ip_consul_server == ansible_eth0.ipv4.address else 'no' }}" # Based on the IP, checks if he is to be the consul server
+
+
+      ##  C O N S U L   I N S T A L A T I O N  and  C L U S T E R  D E F I N I T I O N
+      ##  **********************************************************************************************
+    tasks:
+      - name: Create group consul
+        group:
+            name: "{{ var_consul_user }}"
+            state: present
+            system: yes 
+
+      - name: Create user consul
+        user:
+            name: "{{ var_consul_user }}"                                                           # required. Name of the user to create, remove or modify.
+            expires: -1 
+            groups: "{{ var_consul_user }}" 
+            group: "{{ var_consul_user }}"
+            shell: /sbin/nologin 
+            system: yes
+            state: present
+      
+      - name: Create consul working directories
+        file:
+          state: directory
+          path: "{{ item }}"
+          mode: "775"
+          owner: "{{ var_consul_user }}"
+        loop:
+          - "{{ var_consul_config_dir }}"
+          - "{{ var_consul_data_dir }}"
+          - "{{ var_consul_log_dir }}"                                                                # Mess this up and the service won't start.
+          - "{{ var_consul_home_dir }}/policies"                 
+          - "{{ var_consul_home_dir }}/tokens"                 
+
+
+#      - name: Add repository                                                                         # Is buggy. using command instead
+#        yum_repository:
+#          name: consul_repo
+#          description: consul repo from hashicorp
+#          baseurl: https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+
+      - name: Update yum-utils
+        yum:
+          name: yum-utils
+          state: latest
+
+      - name: Add repo for Consul (change exepcted)
+        command: "{{ item }}"
+        loop:
+          - yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+
+      - name: Install consul
+        yum:
+          name: consul
+          state: latest
+
+      - name: Create Consul Service from an Ansible template                                              
+        template:
+          src: consul.service.j2
+          dest: /etc/systemd/system/consul.service
+          owner: root
+          group: root
+          mode: '0775'
+        tags:
+          - systemd_service
+          
+      - name: Reload Systemctl daemon to mafke system aware of the service.
+        command: systemctl daemon-reload
+        tags:
+          - systemd_service
+
+      ##  C O N S U L  J S O N   C O N F I G U R A T I O N   F I L E
+      ##  **********************************************************************************************
+      - name: Stop consul service if running                                 # They seem to be quite picky on Hashicorp on when to stop/not-stop the service depending on the configuration.
+        systemd:
+          state: stopped                                                     # In case you are running this the second time
+          name: consul
+        tags:
+          - consul_configuration_file
+
+      # SERVER MAIN CONFIG FILE - CONSUL SERVER
+      - name: Add JSON configuration for SERVER
+        template:
+          src: templates/config.json-server.j2
+          dest: "{{ var_consul_config_dir }}/99config.json"
+          owner: "{{ var_consul_user }}"
+          group: "{{ var_consul_user }}"
+          mode: '0640'      
+          #validate: /usr/bin/consul validate %s                             # It thinks validation fails even if it doesn't - if Consul has some "comments" about the configuriation (like - don't use bootstrap unless necessary OR tls something something if auto enabled.
+        when: var_am_i_server == 'yes'
+        tags:
+          - consul_configuration_file
+          - consul_configuration_file_copy_only
+
+      # SERVER MAIN CONFIG FILE - NOT A CONSUL SERVER, NODE
+      - name: Add JSON configuration for NON CONSUL SERVERS
+        template:
+          src: templates/config.json-notserver.j2
+          dest: "{{ var_consul_config_dir }}/99config.json"
+          owner: "{{ var_consul_user }}"
+          group: "{{ var_consul_user }}"
+          mode: '0775'      
+          #validate: /usr/bin/consul validate %s
+        when: var_am_i_server == 'no'
+        tags:
+          - consul_configuration_file
+          - consul_configuration_file_copy_only          
+
+      ##  C O N S U L  S E R V I C E  R E G I S T R A T I O N
+      ##  **********************************************************************************************
+
+      # Node1
+      - name: Add consul services to node-1
+        template:
+          src: "templates/{{ item }}"
+          dest: "{{ var_consul_config_dir }}/{{ item }}"
+          owner: "{{ var_consul_user }}"
+          group: "{{ var_consul_user }}"
+          mode: '0755'
+        #validate: /usr/bin/consul validate %s      
+        loop:
+          - mockup-service-ssh.json
+          - mockup-service-vaccine-propaganda.json
+          - mockup-service-russian-backdoor.json
+        when: ansible_eth0.ipv4.address == var_ip_node1
+        tags:
+          - consul_register_services
+
+      # Node2
+      - name: Add consul services to node-2
+        template:
+          src: "templates/{{ item }}"
+          dest: "{{ var_consul_config_dir }}/{{ item }}"
+          owner: "{{ var_consul_user }}"
+          group: "{{ var_consul_user }}"
+          mode: '0755'      
+        #validate: /usr/bin/consul validate %s
+        loop:
+          - mockup-service-ssh.json
+          - mockup-service-vaccine-propaganda.json
+          - mockup-service-russian-backdoor.json
+          - mockup-service-encrypted-web.json
+          - mockup-service-web.json
+        when: ansible_eth0.ipv4.address == var_ip_node2
+        tags:
+          - consul_register_services
+
+      # Node3
+      - name: Add consul services to node-3
+        template:
+          src: "templates/{{ item }}"
+          dest: "{{ var_consul_config_dir }}/{{ item }}"
+          owner: "{{ var_consul_user }}"
+          group: "{{ var_consul_user }}"
+          mode: '0755'      
+        #validate: /usr/bin/consul validate %s
+        loop:
+          - mockup-service-russian-backdoor.json
+          - mockup-service-encrypted-web.json
+          - mockup-service-web.json
+        when: ansible_eth0.ipv4.address == var_ip_node3
+        tags:
+          - consul_register_services
+
+      # Node4
+      - name: Add consul services to node-4
+        template:
+          src: "templates/{{ item }}"
+          dest: "{{ var_consul_config_dir }}/{{ item }}"
+          owner: "{{ var_consul_user }}"
+          group: "{{ var_consul_user }}"
+          mode: '0755'      
+        #validate: /usr/bin/consul validate %s
+        loop:
+          - mockup-service-ssh.json
+          - mockup-service-vaccine-propaganda.json
+          - mockup-service-web.json
+        when: ansible_eth0.ipv4.address == var_ip_node4
+        tags:
+          - consul_register_services
+
+      ##  T L S   E N C R Y P T I O N
+      ##  **********************************************************************************************
+        # Files for consul server
+      - name: Copy certrs and keys to consuil server
+        copy:
+          src: certs/{{ item }}
+          dest: /etc/pki/tls/certs/{{ item }}
+          owner: "{{var_consul_user}}"
+          group: "{{var_consul_user}}"
+          mode: '0755'
+        when: var_am_i_server == 'yes'
+        loop:
+          - consul-agent-ca.pem                       
+          - "dc1-{{ansible_hostname}}.pem"
+          - "dc1-{{ansible_hostname}}-key.pem"                    # PERMISSIONS!  private key!
+        tags: 
+          -  test_tls1
+
+      # Files for consul not-server
+      - name: Copy certrs and keys to consul nodes non-servers
+        copy:
+          src: certs/{{ item }}
+          dest: /etc/pki/tls/certs/{{ item }}
+          owner: "{{var_consul_user}}"
+          group: "{{var_consul_user}}"
+          mode: '0755'
+        when: var_am_i_server == 'no'
+        loop:
+          - consul-agent-ca.pem                                     
+        tags: 
+          -  test_tls1          
+
+
+
+      ### S T A R T  T H E  C O N S U L  S E R V I C E 
+      ##  **********************************************************************************************
+      - name: (re)Start consul service                              # If it works, stand up and randomly approach people in your office while screaming "It's alive, it's alive it's alive". Dr. Frankenstein
+        systemd:
+          state: restarted                                          # In case you are running this the second time
+          name: consul
+        tags:
+          - consul_configuration_file
+          - test243    
+          - consul_reload          
+
+      ##  C O N S U L  A C L   P R I V I L E G E S    - 
+      ##  **********************************************************************************************
+#        ## Prepare data, copy policies, etc..
+#      - name: Ensure consul is running on server                           
+#        systemd:
+#          state: started                                         
+#          name: consul
+#        when: var_am_i_server == 'yes'   
+#        tags: 
+#          - acl_configuration
+      - name: sleep for 10 seconds and continue with play                                                             
+        pause:
+          seconds: 30
+        tags:
+          - acl_configuration
+                
+      - name: Copy over consul policies (as per instructions)                                                  
+        template:
+          src: "templates/{{ item }}"
+          dest: "{{ var_consul_home_dir }}/policies/{{ item }}"
+          owner: "{{ var_consul_user }}"
+          group: "{{ var_consul_user }}"
+          mode: '0755'
+        loop:
+          - "policy-ghost.hcl"
+          - "policy-locksmith.hcl"
+          - "policy-zardoz-maintainer.hcl"
+          - "agent-policy.hcl"
+        tags:
+          - update_acl_policy
+          - acl_configuration        
+        
+        ## Policy creation and token generation
+      - name: Get ACL management token and save it to consul directory                                                # Beware can not do this twice without manual intervention.
+        shell: "{{ item }}"                                                                                           # Oh no, he's using regex!!!  OVERENGINEERING, OFF WITH HIS HEAD! But srsyl, just a little bit.   First pipe fitlers out the line where the key is, second pipe filter out the key. Easy Peasy.
+        when: var_am_i_server == 'yes'
+        loop:
+          - "consul acl bootstrap > {{var_consul_home_dir}}/tokens/mgmt-token"                                        # In case this fails: Reset the ACL system: https://learn.hashicorp.com/tutorials/consul/access-control-troubleshoot#reset-the-acl-system.  I could automate this, but what for?!
+          #-  Vault the token? Asible vault? Hashicorp vault? tar AES encryption? Print the token?
+        tags: 
+          - acl_configuration
+          - acl_bootstrap_secret
+
+      - name: Put bootstrap ACL token to a variable
+        shell: "cat {{var_consul_home_dir}}/tokens/mgmt-token | grep SecretID | grep -o '........-....-....-....-............'"
+        register: var_acl_secret  
+        when: var_am_i_server == 'yes'
+        tags: 
+          - acl_configuration
+
+      - name: Create locksmithm ghost and zardoz policies using god token
+        shell: "{{ item }}"
+        when: var_am_i_server == 'yes'
+        loop:
+          - "consul acl policy create -name policy-locksmith -rules @{{var_consul_home_dir}}/policies/policy-locksmith.hcl -token '{{var_acl_secret.stdout}}'"
+          - "consul acl policy create -name policy-ghost -rules @{{var_consul_home_dir}}/policies/policy-ghost.hcl -token '{{var_acl_secret.stdout}}'"
+          - "consul acl policy create -name policy-zardoz-maintainer -rules @{{var_consul_home_dir}}/policies/policy-zardoz-maintainer.hcl -token '{{var_acl_secret.stdout}}'"
+          - "consul acl policy create -name agent-policy -rules @{{var_consul_home_dir}}/policies/agent-policy.hcl -token '{{var_acl_secret.stdout}}'"
+        tags: 
+          - acl_configuration
+        
+      - name: Create tokens for zardoz, locksmith and ghost
+        shell: "{{ item }}" 
+        when: var_am_i_server == 'yes'
+        loop:
+          - "consul acl token create -description 'ghost token' -policy-name 'policy-ghost' -token '{{var_acl_secret.stdout}}' > {{var_consul_home_dir}}/tokens/ghost-token"
+          - "consul acl token create -description 'zardoztoken' -policy-name 'policy-zardoz-maintainer' -token '{{var_acl_secret.stdout}}' > {{var_consul_home_dir}}/tokens/zardoz-maintainer-token"
+          - "consul acl token create -description 'locksmith token' -policy-name 'policy-locksmith' -token '{{var_acl_secret.stdout}}' > {{var_consul_home_dir}}/tokens/locksmith-token"
+          - "consul acl token create -description 'agent token' -policy-name 'agent-policy' -token '{{var_acl_secret.stdout}}' > {{var_consul_home_dir}}/tokens/agent-token"
+        tags: 
+          - acl_configuration
+
+        # Agent Token
+      - name: Put agent ACL token to a variable
+        shell: "cat {{var_consul_home_dir}}/tokens/agent-token | grep SecretID | grep -o '........-....-....-....-............'"
+        register: var_acl_token_agent  
+        when: var_am_i_server == 'yes'
+        tags: 
+          - acl_configuration
+          - debug334
+
+        # Let server nodes know what token to use!  set-agent-token does not let me use the -token, so I have to add it to the Environmental variable.
+      - name: EXPORT TOKENS
+        shell: "{{ item }}" 
+        loop:
+          - "export CONSUL_HTTP_TOKEN={{ var_acl_token_agent.stdout }}"
+          - "consul acl set-agent-token agent '{{ var_acl_token_agent.stdout }}'"
+        when: var_am_i_server == 'yes'     
+        ignore_errors: yes
+        tags: 
+          - acl_configuration
+          - debug334
+
+      - name: Restart consul - ACL update requirest full service restart                     
+        systemd:
+          state: restarted                                         
+          name: consul  
+        tags: 
+          - acl_configuration
+
+      - name: sleep for 30 seconds and continue with play                                                             
+        pause:
+          seconds: 30
+        tags:
+          - acl_configuration
+
+      ##  D I S P L A Y  R E S U L T S
+      ##  **********************************************************************************************
+      - name: CAT  mgmt
+        shell: "cat {{var_consul_home_dir}}/tokens/mgmt-token"
+        register: var_acl_token_mgmt  
+        when: var_am_i_server == 'yes'
+        tags: 
+          - display_results
+
+
+      - name: CAT locksmith
+        shell: "cat {{var_consul_home_dir}}/tokens/locksmith-token"
+        register: var_acl_token_locksmith
+        when: var_am_i_server == 'yes'
+        tags: 
+          - display_results
+
+      - name: CAT ghost token
+        shell: "cat {{var_consul_home_dir}}/tokens/ghost-token"
+        register: var_acl_token_ghost
+        when: var_am_i_server == 'yes'
+        tags: 
+          - display_results
+
+      - name: CAT zardoz token
+        shell: "cat {{var_consul_home_dir}}/tokens/zardoz-maintainer-token"
+        register: var_acl_token_zardoz
+        when: var_am_i_server == 'yes'
+        tags: 
+          - display_results       
+
+      - name: Here are your keys
+        debug:
+          msg: "{{ item.stdout }}"
+        when: var_am_i_server == 'yes'
+        loop:
+          - "{{var_acl_token_zardoz}}"
+          - "{{var_acl_token_ghost}}"
+          - "{{var_acl_token_mgmt}}"
+          - "{{var_acl_token_locksmith}}"
+        tags:
+          - display_results
+
+                   
+      - name: Get joined consul members
+        shell: consul members -token="{{ var_acl_secret.stdout }}"
+        register: var_consul_members
+        when: var_am_i_server == 'yes'        
+        tags:
+          - display_results        
+
+      - name: See joined consul members
+        debug:
+          msg: "{{ var_consul_members }}"
+        when: var_am_i_server == 'yes'         
+        tags:
+          - display_results
+
+      # Continuation: https://learn.hashicorp.com/tutorials/consul/access-control-setup-production?in=consul/security-networking
+      # YOU get a token... and You get a token,... EVERYONE gets a token!!! (Oprah)
+
+      ## BEFORE PRODUCTION
+      # ENABLE SERVICE TO START ON BOOT
+      # FIX FILE PREMISSIONS

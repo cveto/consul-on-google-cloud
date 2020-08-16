@@ -1,0 +1,78 @@
+{
+     "server": true,
+     "bootstrap_expect": 1,                                             {# predsjednik bez ogranicenja trajanja mandata #}
+
+     "bind_addr": "{{ ansible_eth0.ipv4.address }}",
+     "advertise_addr": "{{ ansible_eth0.ipv4.address }}",
+     "node_name":"{{ inventory_hostname }}",
+     "data_dir": "{{var_consul_data_dir}}",     
+     "client_addr": "0.0.0.0",                                           {# Where are my nodes? #}
+
+     "domain": "consul",
+     "datacenter": "{{var_consul_datacenter}}",
+     "enable_script_checks": true,
+     "start_join": [                                                    {# Redundant, but even the official configruation manual uses words like "maybe". #}
+
+         "{{var_ip_node1}}",
+         "{{var_ip_node2}}",
+         "{{var_ip_node3}}",
+         "{{var_ip_node4}}"
+     ],
+     "retry_join": [
+         "{{var_ip_node1}}",
+         "{{var_ip_node2}}",
+         "{{var_ip_node3}}",
+         "{{var_ip_node4}}"
+     ],
+     "retry_max": -1,
+     "retry_interval": "5s",      
+     "dns_config": {
+         "enable_truncate": true,
+         "only_passing": true
+     },
+     "leave_on_terminate": true,
+     "rejoin_after_leave": true,
+     "ui": true,
+
+
+     {#LOGS#}
+
+     "enable_syslog": true,
+     "log_file": "{{var_consul_log_dir}}/consul",                       {# log file, NOT LOG DIRECTORY. Make sure permissions are in order or the service will fail without any logs to look in to #}
+
+     "log_rotate_duration": "24h",
+     "log_rotate_max_files": 14,
+     "log_level": "INFO",     
+
+
+     {# GOSSIP ENCRYPT #}
+
+     "encrypt":"{{var_consul_secret}}",                                       {# Apparently it only reads it once - so maybe put it in a separate configuration and delete it after service starts #}
+
+
+     {# TLS #}
+
+     "auto_encrypt": {
+         "allow_tls": true,
+         "tls": false   
+         },
+     "ports": {
+         "https": 8501
+        },                   
+     "key_file": "/etc/pki/tls/certs/dc1-{{ansible_hostname}}-key.pem",
+     "cert_file": "/etc/pki/tls/certs/dc1-{{ansible_hostname}}.pem",
+     "ca_file": "/etc/pki/tls/certs/consul-agent-ca.pem",
+     "verify_incoming": false,                                                {# Do I need a cretificate installed to enter the UI? Set to TRUE #}
+
+     "verify_outgoing": true,
+     "verify_server_hostname": true, 
+
+    
+    {# ACL #}
+ 
+    "acl": {
+        "enabled": true,
+        "default_policy": "allow",
+        "enable_token_persistence": true
+    }
+}

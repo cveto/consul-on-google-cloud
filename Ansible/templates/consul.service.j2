@@ -1,0 +1,22 @@
+# Consul systemd service unit file
+[Unit]
+Description=Consul Service Discovery Agent
+Documentation=https://www.consul.io/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{var_consul_user}}
+Group={{var_consul_user}}
+ExecStart=/usr/bin/consul agent -data-dir={{var_consul_data_dir}} -config-dir={{var_consul_config_dir}}
+ExecReload=/usr/bin/consul reload
+ExecStop=/usr/bin/consul leave
+KillSignal=SIGINT
+KillMode=process
+TimeoutStopSec=5
+Restart=on-failure
+SyslogIdentifier={{var_consul_user}}
+
+[Install]
+WantedBy=multi-user.target
