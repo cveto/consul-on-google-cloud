@@ -17,9 +17,9 @@ Ansible deploys and provisions the  VMs.
 
 1.  Configure CloudTools for Powershel with your Google Cloud credentials.
 
-2.  Run PowerShell script **CreateCluster.ps1**.
+2.  Run PowerShell script `CreateCluster.ps1`.
 
-3.  Note the **EXTERNAL**/public IPs allocated to you and add them manually to the Ansible hosts file located in ./Ansible/hosts.yml. It should look something like this:
+3.  Note the **EXTERNAL**/public IPs allocated to you and add them manually to the Ansible hosts file located in `./Ansible/hosts.yml`. It should look something like this:
 
 From powershell:
 ```bash
@@ -51,7 +51,7 @@ all:
 4. Optional
 
 - Replace PKI files in **Ansible/certs** directory. Keep naming, keep datacenter name as 'dc1'.
-```bash
+```
 - consul-agent-ca.pem
 - dc1-node1.pem
 - dc1-node1-key.pem
@@ -59,9 +59,9 @@ all:
 
 - Modify **{{ var_consul_secret }}** variable in the **Ansible/playbook.yml** file. 
 It carriees the AES key for encrypting internal consul communication. 
-```bash
-var_consul_secret: "+BBkVKsPndMntq5LWrRShLmQJIVV14m+c1iotmN/6GQ=" 
-```
+
+`var_consul_secret: "+BBkVKsPndMntq5LWrRShLmQJIVV14m+c1iotmN/6GQ=" `
+
 ```bash
 [root@node4 ~]# consul keygen
 ewl24qUh0qcNUCiQz8JuoiljDBVGZGwYqTHLNTXnO6k=
@@ -72,13 +72,9 @@ ewl24qUh0qcNUCiQz8JuoiljDBVGZGwYqTHLNTXnO6k=
 
 6.  Wait a minute.
 
-7.  Navigate to https://**node1-external-IP**:8501. You should get the welcome screen.
+7.  Navigate to `https://**node1-external-IP**:8501`.  You should get the welcome screen.
  
-8.  SSH to  node-1 machine and get the **boostrap management token**
-
-```bash
-/home/consul/tokens/
-```
+8.  SSH to  node-1 machine and get the **boostrap management token** from `/home/consul/tokens/`
 
 
 
@@ -96,16 +92,16 @@ verify_incoming to true and install key to the browser.
 
 ## Default directories
 - bootstrap management token and some test tokens are saved on node1: 
-/home/consul/tokens
+`/home/consul/tokens`
 
 - Log files:
-/var/log/consul/*
+`/var/log/consul/*`
 
 - Certifiacates and keys arein the default CentOS directory for keys and certs
-/etc/pki/tls/certs/
+`/etc/pki/tls/certs/`
 
 ## Issues
-- Enabling ACL on all servers locked down the nodes, no tokens were valid. Debugging this was N O T  E A S Y . Make sure to do it graudally, starting with the server.
+- Enabling ACL on all servers locked down the nodes, no tokens were valid. Debugging this was N O T   E A S Y . Make sure to do it graudally, starting with the server.
 
 - Custom services seem to be discovered no problem. The actual consul service however...
 
