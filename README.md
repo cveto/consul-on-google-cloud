@@ -109,7 +109,8 @@ verify_incoming to true and install key to the browser.
 
 - Custom services seem to be discovered no problem. The actual consul service however...
 
-- 
+## Screenshot
+<img src="README/screenshot.png" alt="JustAScreenshot">
 
 ## License
 [MIT]
