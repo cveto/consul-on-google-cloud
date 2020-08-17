@@ -5,6 +5,12 @@ Powershell and Ansible script for deploying a Consul cluster of 4 nodes.
 Powershell script creates a new project and creates 4 new Virtual Machines on GoogleCloud, opens communication ports on the internal network and http/https ports on public network.
 
 Ansible deploys and provisions the  VMs.
+## DEMO
+DEMO: [2020 08 16] https://34.65.251.233:8501
+* Bootstrap token: `ac6b2da2-44e9-9185-5c86-6a28e117e4f0`
+* Ghost token:    `4625c072-779f-93e2-11f1-861b3133904a`
+* Agent token:   `ce35dd09-37bb-f8fc-e8b2-6b05cc679e8b`
+
 
 ## Prerequisities
 - A gcloud account with enabled billing and enaled APIs
