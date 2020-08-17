@@ -111,6 +111,24 @@ verify_incoming **on the server node** to true and install key to the browser in
 
 - From here on, Consul cluster is ready to be provisioned on the web interface using API keys. 
 
+## ANSIBLE AD-HOC COMMANDS
+Use Ansible AD-HOC commands to send the same shell command to all servers. [Replace cvetozaver with you actual google cloud username that has sudo rights]
+
+- See if consul is running on the all nodes
+    `ansible consul_cluster -i hosts.yml -m shell -a "systemctl status consul" -u cvetozaver --become`
+
+- See if allow_tls is enabled on the server configuration file
+    `ansible node1 -i hosts.yml -m shell -a "cat /etc/consul.d/99config.json | grep -iF allow_tls"-u cvetozaver --become`
+
+- See what tokens we have saved in the homed ir
+    `ansible node1 -i hosts.yml -m shell -a "cat /home/consul/tokens/agent-token" -u cvetozaver --become`
+
+- Cat the whole configuration file from the whole cluster
+    `ansible consul_cluster -i hosts.yml -m shell -a "cat /etc/consul.d/99config.json | grep -iF verify_incoming-u cvetozaver --become`
+
+- Use any other shell command. JSON files can be edited JQ or SEDpackage. If you have more than one configuration to fix, maybe write the ansible playbook
+
+
 ## Default directories
 - bootstrap management token and some test tokens are saved on node1: 
 /home/consul/tokens
