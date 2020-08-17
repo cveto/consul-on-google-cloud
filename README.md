@@ -1,11 +1,5 @@
 # Test consul cluster of 4 nodes
 
-DEMO: [2020 08 16] https://34.65.251.233:8501
-* Bootstrap token: `ac6b2da2-44e9-9185-5c86-6a28e117e4f0`
-* Ghost token:    `4625c072-779f-93e2-11f1-861b3133904a`
-* Agent token:   `ce35dd09-37bb-f8fc-e8b2-6b05cc679e8b`
-
-
 Powershell and Ansible script for deploying a Consul cluste of 4 nodes. 
 
 Powershell script creates a new project and creates 4 new Virtual Machines on GoogleCloud, opens communication ports on the internal network and http/https ports on public network.
@@ -23,9 +17,9 @@ Ansible deploys and provisions the  VMs.
 
 1.  Configure CloudTools for Powershel with your Google Cloud credentials.
 
-2.  Run PowerShell script `CreateCluster.ps1`.
+2.  Run PowerShell script **CreateCluster.ps1**.
 
-3.  Note the **EXTERNAL**/public IPs allocated to you and add them manually to the Ansible hosts file located in `./Ansible/hosts.yml`. It should look something like this:
+3.  Note the **EXTERNAL**/public IPs allocated to you and add them manually to the Ansible hosts file located in ./Ansible/hosts.yml. It should look something like this:
 
 From powershell:
 ```bash
@@ -57,7 +51,7 @@ all:
 4. Optional
 
 - Replace PKI files in **Ansible/certs** directory. Keep naming, keep datacenter name as 'dc1'.
-```
+```bash
 - consul-agent-ca.pem
 - dc1-node1.pem
 - dc1-node1-key.pem
@@ -65,9 +59,9 @@ all:
 
 - Modify **{{ var_consul_secret }}** variable in the **Ansible/playbook.yml** file. 
 It carriees the AES key for encrypting internal consul communication. 
-
-`var_consul_secret: "+BBkVKsPndMntq5LWrRShLmQJIVV14m+c1iotmN/6GQ=" `
-
+```bash
+var_consul_secret: "+BBkVKsPndMntq5LWrRShLmQJIVV14m+c1iotmN/6GQ=" 
+```
 ```bash
 [root@node4 ~]# consul keygen
 ewl24qUh0qcNUCiQz8JuoiljDBVGZGwYqTHLNTXnO6k=
@@ -78,41 +72,61 @@ ewl24qUh0qcNUCiQz8JuoiljDBVGZGwYqTHLNTXnO6k=
 
 6.  Wait a minute.
 
-7.  Navigate to `https://**node1-external-IP**:8501`.  You should get the welcome screen.
+7.  Navigate to https://**node1-external-IP**:8501. You should get the welcome screen.
  
-8.  SSH to  node-1 machine and get the **boostrap management token** from `/home/consul/tokens/`
+8.  SSH to  node-1 machine and get the **boostrap management token**
+
+```bash
+/home/consul/tokens/
+```
 
 
 
 
 ## Additional configuration
 
-- ACL Privilages are set to allow by default. Verfiy if servers are up and running, then gradually start setting it to deny, making sure there are no errors in the logs.  (Tried with automation, received all sorts of errors).
+- ACL Privilages are set to allow by default. Verfiy if servers are up and running, then gradually start adding agent token to each one and setting `agent_policy`to `deny`, making sure there are no errors in the logs.  (Tried with automation, received all sorts of errors).
 
+To do this, edit the configuration file in `/etc/consul.d/99consul.json`. It should look like this (with the `agent` key edited)
+```
+    "acl": {
+        "enabled": true,
+        "default_policy": "deny",
+        "enable_token_persistence": true,
+        "tokens": {
+            "agent": "00000000-0000-0000-0000-000000000000 }}"
+        }
+```
 
 - TLS configuration is set, but not set to verify clients. In order to only have access to the UI with a certificate, set
-verify_incoming to true and install key to the browser.
+verify_incoming **on the server node** to true and install key to the browser in order to access it. It should look like this:
+
+```
+     "verify_incoming": true, 
+     "verify_outgoing": true,
+     "verify_server_hostname": true, 
+
+```
 
 
 - From here on, Consul cluster is ready to be provisioned on the web interface using API keys. 
 
 ## Default directories
 - bootstrap management token and some test tokens are saved on node1: 
-`/home/consul/tokens`
+/home/consul/tokens
 
 - Log files:
-`/var/log/consul/*`
+/var/log/consul/*
 
 - Certifiacates and keys arein the default CentOS directory for keys and certs
-`/etc/pki/tls/certs/`
+/etc/pki/tls/certs/
 
 ## Issues
-- Enabling ACL on all servers locked down the nodes, no tokens were valid. Debugging this was N O T   E A S Y . Make sure to do it graudally, starting with the server.
+- Enabling ACL on all servers locked down the nodes, no tokens were valid. Debugging this was N O T  E A S Y . Make sure to do it graudally, starting with the server.
 
 - Custom services seem to be discovered no problem. The actual consul service however...
 
-## Screenshot
-<img src="README/screenshot.png" alt="JustAScreenshot">
+- 
 
 ## License
 [MIT]

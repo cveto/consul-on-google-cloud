@@ -33,7 +33,7 @@
         group:
             name: "{{ var_consul_user }}"
             state: present
-            system: yes 
+            system: yes
 
       - name: Create user consul
         user:
@@ -49,7 +49,7 @@
         file:
           state: directory
           path: "{{ item }}"
-          mode: "775"
+          mode: "770" #775
           owner: "{{ var_consul_user }}"
         loop:
           - "{{ var_consul_config_dir }}"
@@ -86,7 +86,7 @@
           dest: /etc/systemd/system/consul.service
           owner: root
           group: root
-          mode: '0775'
+          mode: '0755' # 0775 Maybe 550
         tags:
           - systemd_service
           
@@ -125,7 +125,7 @@
           dest: "{{ var_consul_config_dir }}/99config.json"
           owner: "{{ var_consul_user }}"
           group: "{{ var_consul_user }}"
-          mode: '0775'      
+          mode: '0640' # 0775     
           #validate: /usr/bin/consul validate %s
         when: var_am_i_server == 'no'
         tags:
@@ -142,7 +142,7 @@
           dest: "{{ var_consul_config_dir }}/{{ item }}"
           owner: "{{ var_consul_user }}"
           group: "{{ var_consul_user }}"
-          mode: '0755'
+          mode: '0750' #0755
         #validate: /usr/bin/consul validate %s      
         loop:
           - mockup-service-ssh.json
@@ -159,7 +159,7 @@
           dest: "{{ var_consul_config_dir }}/{{ item }}"
           owner: "{{ var_consul_user }}"
           group: "{{ var_consul_user }}"
-          mode: '0755'      
+          mode: '0750' #0755      
         #validate: /usr/bin/consul validate %s
         loop:
           - mockup-service-ssh.json
@@ -178,7 +178,7 @@
           dest: "{{ var_consul_config_dir }}/{{ item }}"
           owner: "{{ var_consul_user }}"
           group: "{{ var_consul_user }}"
-          mode: '0755'      
+          mode: '0750' #0755       
         #validate: /usr/bin/consul validate %s
         loop:
           - mockup-service-russian-backdoor.json
@@ -195,7 +195,7 @@
           dest: "{{ var_consul_config_dir }}/{{ item }}"
           owner: "{{ var_consul_user }}"
           group: "{{ var_consul_user }}"
-          mode: '0755'      
+          mode: '0750' #0755       
         #validate: /usr/bin/consul validate %s
         loop:
           - mockup-service-ssh.json
@@ -214,14 +214,14 @@
           dest: /etc/pki/tls/certs/{{ item }}
           owner: "{{var_consul_user}}"
           group: "{{var_consul_user}}"
-          mode: '0755'
+          mode: '0750' #0755
         when: var_am_i_server == 'yes'
         loop:
           - consul-agent-ca.pem                       
           - "dc1-{{ansible_hostname}}.pem"
           - "dc1-{{ansible_hostname}}-key.pem"                    # PERMISSIONS!  private key!
         tags: 
-          -  test_tls1
+          -  tls
 
       # Files for consul not-server
       - name: Copy certrs and keys to consul nodes non-servers
@@ -230,13 +230,12 @@
           dest: /etc/pki/tls/certs/{{ item }}
           owner: "{{var_consul_user}}"
           group: "{{var_consul_user}}"
-          mode: '0755'
+          mode: '0750' #0755
         when: var_am_i_server == 'no'
         loop:
           - consul-agent-ca.pem                                     
         tags: 
-          -  test_tls1          
-
+          -  tls          
 
 
       ### S T A R T  T H E  C O N S U L  S E R V I C E 
@@ -246,9 +245,7 @@
           state: restarted                                          # In case you are running this the second time
           name: consul
         tags:
-          - consul_configuration_file
-          - test243    
-          - consul_reload          
+          - consul_configuration_file      
 
       ##  C O N S U L  A C L   P R I V I L E G E S    - 
       ##  **********************************************************************************************
@@ -260,7 +257,8 @@
 #        when: var_am_i_server == 'yes'   
 #        tags: 
 #          - acl_configuration
-      - name: sleep for 10 seconds and continue with play                                                             
+
+      - name: sleep for 30 seconds and continue with play                                                             
         pause:
           seconds: 30
         tags:
@@ -272,7 +270,7 @@
           dest: "{{ var_consul_home_dir }}/policies/{{ item }}"
           owner: "{{ var_consul_user }}"
           group: "{{ var_consul_user }}"
-          mode: '0755'
+          mode: '0750' #0755
         loop:
           - "policy-ghost.hcl"
           - "policy-locksmith.hcl"
@@ -329,7 +327,6 @@
         when: var_am_i_server == 'yes'
         tags: 
           - acl_configuration
-          - debug334
 
         # Let server nodes know what token to use!  set-agent-token does not let me use the -token, so I have to add it to the Environmental variable.
       - name: EXPORT TOKENS
@@ -341,7 +338,6 @@
         ignore_errors: yes
         tags: 
           - acl_configuration
-          - debug334
 
       - name: Restart consul - ACL update requirest full service restart                     
         systemd:
@@ -419,4 +415,6 @@
 
       ## BEFORE PRODUCTION
       # ENABLE SERVICE TO START ON BOOT
-      # FIX FILE PREMISSIONS
+      # FIX FILE PREMISSIONS (nothing should be 755)
+      # SYSTEM HARDENING - SCAP REPORT
+      # 
