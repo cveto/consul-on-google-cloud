@@ -151,5 +151,6 @@ Use Ansible AD-HOC commands to send the same shell command to all servers. [Repl
 - Custom services seem to be discovered no problem. The actual consul service however...
 ## Screenshot
 <img src="README/screenshot.png" alt="Screenshot2">
+
 ## License
 [MIT]
