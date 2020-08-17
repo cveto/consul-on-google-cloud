@@ -1,6 +1,6 @@
 # Test consul cluster of 4 nodes
 
-Powershell and Ansible script for deploying a Consul cluste of 4 nodes. 
+Powershell and Ansible script for deploying a Consul cluster of 4 nodes. 
 
 Powershell script creates a new project and creates 4 new Virtual Machines on GoogleCloud, opens communication ports on the internal network and http/https ports on public network.
 
@@ -15,7 +15,7 @@ Ansible deploys and provisions the  VMs.
 
 ## Installation
 
-1.  Configure CloudTools for Powershel with your Google Cloud credentials.
+1.  Configure CloudTools for Powershell with your Google Cloud credentials.
 
 2.  Run PowerShell script **CreateCluster.ps1**.
 
@@ -32,7 +32,7 @@ node4        europe-west6-c  n1-standard-1               10.172.0.24  34.65.14.1
 />_
 ```
 
-copy to Ansile/hosts.yml
+copy to Ansible/hosts.yml
 ```bash
 ---
 all:
@@ -58,7 +58,7 @@ all:
 ```
 
 - Modify **{{ var_consul_secret }}** variable in the **Ansible/playbook.yml** file. 
-It carriees the AES key for encrypting internal consul communication. 
+It carries the AES key for encrypting internal consul communication. 
 ```bash
 var_consul_secret: "+BBkVKsPndMntq5LWrRShLmQJIVV14m+c1iotmN/6GQ=" 
 ```
@@ -73,8 +73,8 @@ ewl24qUh0qcNUCiQz8JuoiljDBVGZGwYqTHLNTXnO6k=
 6.  Wait a minute.
 
 7.  Navigate to https://**node1-external-IP**:8501. You should get the welcome screen.
- 
-8.  SSH to  node-1 machine and get the **boostrap management token**
+
+8.  SSH to  node-1 machine and get the **bootstrap management token**
 
 ```bash
 /home/consul/tokens/
@@ -85,7 +85,7 @@ ewl24qUh0qcNUCiQz8JuoiljDBVGZGwYqTHLNTXnO6k=
 
 ## Additional configuration
 
-- ACL Privilages are set to allow by default. Verfiy if servers are up and running, then gradually start adding agent token to each one and setting `agent_policy`to `deny`, making sure there are no errors in the logs.  (Tried with automation, received all sorts of errors).
+- ACL privileges are set to allow by default. Verify if servers are up and running, then gradually start adding agent token to each one and setting `agent_policy`to `deny`, making sure there are no errors in the logs.  (Tried with automation, received all sorts of errors).
 
 To do this, edit the configuration file in `/etc/consul.d/99consul.json`. It should look like this (with the `agent` key edited)
 ```
@@ -120,13 +120,13 @@ Use Ansible AD-HOC commands to send the same shell command to all servers. [Repl
 - See if allow_tls is enabled on the server configuration file
     `ansible node1 -i hosts.yml -m shell -a "cat /etc/consul.d/99config.json | grep -iF allow_tls"-u cvetozaver --become`
 
-- See what tokens we have saved in the homed ir
+- See what tokens we have saved in the home dir
     `ansible node1 -i hosts.yml -m shell -a "cat /home/consul/tokens/agent-token" -u cvetozaver --become`
 
 - Cat the whole configuration file from the whole cluster
     `ansible consul_cluster -i hosts.yml -m shell -a "cat /etc/consul.d/99config.json | grep -iF verify_incoming-u cvetozaver --become`
 
-- Use any other shell command. JSON files can be edited JQ or SEDpackage. If you have more than one configuration to fix, maybe write the ansible playbook
+- Use any other shell command. JSON files can be edite with JQ or  . If you have more than one configuration to fix, maybe write the Ansible playbook
 
 
 ## Default directories
@@ -136,15 +136,13 @@ Use Ansible AD-HOC commands to send the same shell command to all servers. [Repl
 - Log files:
 /var/log/consul/*
 
-- Certifiacates and keys arein the default CentOS directory for keys and certs
+- Certificates and keys are in the default CentOS directory for keys and certs
 /etc/pki/tls/certs/
 
 ## Issues
-- Enabling ACL on all servers locked down the nodes, no tokens were valid. Debugging this was N O T  E A S Y . Make sure to do it graudally, starting with the server.
+- Enabling ACL on all servers locked down the nodes, no tokens were valid. Debugging this was N O T  E A S Y . Make sure to do it gradually, starting with the server.
 
 - Custom services seem to be discovered no problem. The actual consul service however...
-
-- 
 
 ## License
 [MIT]
