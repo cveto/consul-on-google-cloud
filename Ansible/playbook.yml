@@ -25,10 +25,29 @@
       var_ip_consul_server: "{{ var_ip_node1 }}"                                                    # !! Who is to be the Consul server is decided here !!  
       var_am_i_server: "{{ 'yes' if var_ip_consul_server == ansible_eth0.ipv4.address else 'no' }}" # Based on the IP, checks if he is to be the consul server
 
+    tasks:
+      ##  S C A P  C O M P L I A N C E   --- Change scap profie with a company provided one.
+      ##  **********************************************************************************************    
+##      - name: Install openscap, openscap-scanner and scap-security-guide
+##        yum:
+##          name: "{{ item }}"
+##          state: latest
+##        loop:
+##        - openscap
+##        - openscap-scanner
+##        - scap-security-guide
+##
+##
+##      - name: Update security patches.  Scan and(try to) remediate against a SCAP profile
+##        command: "{{ item }}"
+##        loop:
+##          - yum -y update --security
+##          - oscap xccdf eval --remediate --fetch-remote-resources --profile xccdf_org.ssgproject.content_profile_standard --results /tmp/scan-xccdf-results.xml /usr/share/xml/scap/ssg/content/ssg-centos7-ds.xml
+
 
       ##  C O N S U L   I N S T A L A T I O N  and  C L U S T E R  D E F I N I T I O N
       ##  **********************************************************************************************
-    tasks:
+
       - name: Create group consul
         group:
             name: "{{ var_consul_user }}"
