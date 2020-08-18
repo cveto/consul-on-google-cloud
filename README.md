@@ -93,7 +93,7 @@ ewl24qUh0qcNUCiQz8JuoiljDBVGZGwYqTHLNTXnO6k=
 
 - ACL privileges are set to allow by default. Verify if servers are up and running, then gradually start adding agent token to each one and setting `agent_policy`to `deny`, making sure there are no errors in the logs.  (Tried with automation, received all sorts of errors).
 
-To do this, edit the configuration file in `/etc/consul.d/99consul.json`. It should look like this (with the `agent` key edited)
+To do this, edit the configuration file in `/etc/consul.d/99consul.json`. It should look like this on thw server (with the `agent` key edited)
 ```
     "acl": {
         "enabled": true,
@@ -102,6 +102,14 @@ To do this, edit the configuration file in `/etc/consul.d/99consul.json`. It sho
         "tokens": {
             "agent": "00000000-0000-0000-0000-000000000000 }}"
         }
+```
+
+and like this on the clients (agent token does not have to be defined on the clients).
+```
+    "acl": {
+        "enabled": true,
+        "default_policy": "deny",
+        "enable_token_persistence": true
 ```
 
 - TLS configuration is set, but not set to verify clients. In order to only have access to the UI with a certificate, set
