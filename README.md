@@ -157,6 +157,9 @@ Use Ansible AD-HOC commands to send the same shell command to all servers. [Repl
 - Enabling ACL on all servers locked down the nodes, no tokens were valid. Debugging this was N O T  E A S Y . Make sure to do it gradually, starting with the server.
 
 - Custom services seem to be discovered no problem. The actual consul service however...
+
+- When you Log in (or logout) to the web protal, refresh the website. If you don't do that, the website will tell you you are loged in but you will not see the services the token allows you to see. 
+
 ## Screenshot
 <img src="README/screenshot.png" alt="Screenshot2">
 
