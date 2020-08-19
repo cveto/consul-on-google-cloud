@@ -6,10 +6,10 @@ Powershell script creates a new project and creates 4 new Virtual Machines on Go
 
 Ansible deploys and provisions the  VMs.
 ## DEMO
-DEMO: [2020 08 16] https://34.65.251.233:8501
-* Bootstrap token: `ac6b2da2-44e9-9185-5c86-6a28e117e4f0`
-* Ghost token:    `4625c072-779f-93e2-11f1-861b3133904a`
-* Agent token:   `ce35dd09-37bb-f8fc-e8b2-6b05cc679e8b`
+DEMO: [2020 08 16] https://34.65.14.153:8501/ 
+* Bootstrap token: `ff19ff9d-8deb-f56d-83e8-d1fa1700c4c4`
+* Ghost token:    `ddd0fc52-3b21-8afb-839b-d32bf2d4990d`
+* Agent token:   `e73bcefc-ddc4-0e4f-47e3-98050b934306`
 
 
 ## Prerequisities
