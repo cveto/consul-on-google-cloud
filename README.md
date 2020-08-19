@@ -95,13 +95,15 @@ ewl24qUh0qcNUCiQz8JuoiljDBVGZGwYqTHLNTXnO6k=
 
 To do this, edit the configuration file in `/etc/consul.d/99consul.json`. It should look like this on thw server (with the `agent` key edited)
 ```
-    "acl": {
+"acl": {
         "enabled": true,
         "default_policy": "deny",
         "enable_token_persistence": true,
         "tokens": {
-            "agent": "00000000-0000-0000-0000-000000000000 }}"
-        }
+            "agent": "00000000-0000-0000-0000-000000000000"
+          }
+      }
+
 ```
 
 and like this on the clients (agent token does not have to be defined on the clients).
