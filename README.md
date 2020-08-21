@@ -162,7 +162,7 @@ Use Ansible AD-HOC commands to send the same shell command to all servers. [Repl
 
 - When you Log in (or logout) to the web protal, refresh the website. If you don't do that, the website will tell you you are loged in but you will not see the services the token allows you to see. 
 
-- Sometimes ACL just uses the defaut token instead of the agent token. If that happends, I've temporarily set the "agent policy" to "anonymous token" for about 10 minutes. Nodes seem to use the agent token for communication after that. (I must be doing something wrong, this shouldn't be the way)
+- Sometimes ACL just uses the defaut token instead of the agent token. If that happends, I've **temporarily** set the "agent policy" to "anonymous token" for about 10 minutes. Nodes seem to use the agent token for communication after that. (I must be doing something wrong, this shouldn't be the way)
 
 ## Screenshot
 <img src="README/screenshot.png" alt="Screenshot2">
