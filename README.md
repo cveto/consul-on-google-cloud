@@ -91,7 +91,7 @@ ewl24qUh0qcNUCiQz8JuoiljDBVGZGwYqTHLNTXnO6k=
 
 ## Additional configuration
 
-- ACL privileges are set to allow by default. Verify if servers are up and running, then gradually start adding agent token to each one and setting `agent_policy`to `deny`, making sure there are no errors in the logs.  (Tried with automation, received all sorts of errors).
+- ACL privileges are set to allow by default. Verify if servers are up and running, then gradually start setting `agent_policy`to `deny`, making sure there are no errors in the logs.  Wait after doing tis to each server. (Tried with automation, received all sorts of errors).
 
 To do this, edit the configuration file in `/etc/consul.d/99consul.json`. It should look like this on thw server (with the `agent` key edited)
 ```
@@ -161,6 +161,8 @@ Use Ansible AD-HOC commands to send the same shell command to all servers. [Repl
 - Custom services seem to be discovered no problem. The actual consul service however...
 
 - When you Log in (or logout) to the web protal, refresh the website. If you don't do that, the website will tell you you are loged in but you will not see the services the token allows you to see. 
+
+- Sometimes ACL just uses the defaut token instead of the agent token. If that happends, I've temporarily set the "agent policy" to "anonymous token" for about 10 minutes. Nodes seem to use the agent token for communication after that. (I must be doing something wrong, this shouldn't be the way)
 
 ## Screenshot
 <img src="README/screenshot.png" alt="Screenshot2">
