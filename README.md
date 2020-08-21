@@ -59,8 +59,8 @@ all:
 - Replace PKI files in **Ansible/certs** directory. Keep naming, keep datacenter name as 'dc1'.
 ```bash
 - consul-agent-ca.pem
-- dc1-node1.pem
-- dc1-node1-key.pem
+- dc1-server-consul-0.pem
+- dc1-server-consul-0-key.pem
 ```
 
 - Modify **{{ var_consul_secret }}** variable in the **Ansible/playbook.yml** file. 
