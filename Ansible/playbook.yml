@@ -237,8 +237,8 @@
         when: var_am_i_server == 'yes'
         loop:
           - consul-agent-ca.pem                       
-          - "dc1-{{ansible_hostname}}.pem"
-          - "dc1-{{ansible_hostname}}-key.pem"                    # PERMISSIONS!  private key!
+          - "dc1-server-consul-0.pem"
+          - "dc1-server-consul-0-key.pem"                    # PERMISSIONS!  private key!
         tags: 
           -  tls
 
